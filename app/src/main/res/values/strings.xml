@@ -3,4 +3,6 @@
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
     <string name="toggle_controls">Toggle Controls</string>
+    <string name="prefs_audiobook_path">AudioBook Path</string>
+    <string name="prefs_audiobook_path_summary">Path to directory with AudioBook files</string>
 </resources>
