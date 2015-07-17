@@ -8,7 +8,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by jv on 7/14/2015.
+ * @author Jason Vinson
+ *
+ * Model class that repesents a folder of audiobook files for a single AudioBook
  */
 public class AudioBook {
 
@@ -26,7 +28,7 @@ public class AudioBook {
     private String bookPath;
     private String coverImagePath;
     private int currentFileIndex = 0;
-    private long currentPosition = 0;
+    private int currentPosition = 0;
     private long totalDuration;
     private List<AudioBookFile> bookFiles;
 
@@ -40,7 +42,7 @@ public class AudioBook {
         setBookPath(json.getString(JSON_BOOKPATH));
         setCoverImagePath(json.getString(JSON_COVER_IMAGE_PATH));
         setCurrentFileIndex(json.getInt(JSON_CURR_FILE_INDEX));
-        setCurrentPosition(json.getLong(JSON_CURR_POS));
+        setCurrentPosition(json.getInt(JSON_CURR_POS));
         setTotalDuration(json.getLong(JSON_TOTAL_DURATION));
         setBookFiles(getBookFilesFromJSON(json));
     }
@@ -69,11 +71,11 @@ public class AudioBook {
         this.currentFileIndex = currentFileIndex;
     }
 
-    public long getCurrentPosition() {
+    public int getCurrentPosition() {
         return currentPosition;
     }
 
-    public void setCurrentPosition(long currentPosition) {
+    public void setCurrentPosition(int currentPosition) {
         this.currentPosition = currentPosition;
     }
 
@@ -93,12 +95,12 @@ public class AudioBook {
         this.bookFiles = bookFiles;
     }
 
-    public void setBookPath(String bookPath) {
-        this.bookPath = bookPath;
-    }
-
     public String getBookPath() {
         return bookPath;
+    }
+
+    public void setBookPath(String bookPath) {
+        this.bookPath = bookPath;
     }
 
     public JSONObject toJSON() throws JSONException {

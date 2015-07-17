@@ -1,9 +1,9 @@
 package com.shemasoft.android.bard;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.media.MediaMetadataRetriever;
 import android.preference.PreferenceManager;
+import android.util.Log;
 
 import com.shemasoft.android.bard.model.AudioBook;
 import com.shemasoft.android.bard.model.AudioBookFile;
@@ -13,11 +13,15 @@ import org.json.JSONObject;
 import org.json.JSONTokener;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.util.Scanner;
 
 /**
- * Created by jv on 7/15/2015.
+ * @author Jason Vinson
+ *
+ * Class to manage AudioBook objects, primarily focused on Load/Save
  */
 public class AudioBookManager {
 
@@ -45,68 +49,94 @@ public class AudioBookManager {
     public AudioBook load() throws BardException {
         String audioBookDirectoryPath = PreferenceManager.getDefaultSharedPreferences(this.context).getString(PREFS_AUDIOBOOK_PATH, "");
         AudioBook audioBook = null;
-        try {
-            // Try to load directory as audiobook folder
-            // TODO: Try to look at directory of files once instead of multiple iterations
-            File audioBookDirectory = new File(audioBookDirectoryPath);
-            if(audioBookDirectory.exists()) {
+        if (null != audioBookDirectoryPath && !audioBookDirectoryPath.isEmpty()) {
+            try {
+                // Try to load directory as audiobook folder
+                // TODO: Try to look at directory of files once instead of multiple iterations
+                File audioBookDirectory = new File(audioBookDirectoryPath);
+                if (audioBookDirectory.exists()) {
 
-                // Check for existing json descriptor
-                File[] files = audioBookDirectory.listFiles(new FilenameFilter() {
-                    @Override
-                    public boolean accept(File dir, String filename) {
-                        return filename.equals(AUDIOBOOK_JSON_FILE);
-                    }
-                });
-
-
-                if (null != files && files.length == 1) {
-                    Scanner scanner = new Scanner(files[0]);
-                    scanner.useDelimiter("//Z");
-                    String jsonString = scanner.next();
-                    audioBook = new AudioBook((JSONObject) new JSONTokener(jsonString).nextValue());
-                } else {
-                    audioBook = new AudioBook();
-                    audioBook.setBookPath(audioBookDirectoryPath);
-                    audioBook.setTitle(audioBookDirectory.getName());
-                    File[] audioBookFileList = audioBookDirectory.listFiles(new FilenameFilter() {
+                    // Check for existing json descriptor
+                    File[] files = audioBookDirectory.listFiles(new FilenameFilter() {
                         @Override
                         public boolean accept(File dir, String filename) {
-                            // TODO: Support more than Mp3?
-                            return filename.endsWith(".mp3");
+                            return filename.equals(AUDIOBOOK_JSON_FILE);
                         }
                     });
 
-                    long totalDuration = 0;
-                    MediaMetadataRetriever mmr = new MediaMetadataRetriever();
-                    if (null != audioBookFileList) {
-                        for (int i = 0; i < audioBookFileList.length; i++) {
-                            mmr.setDataSource(audioBookFileList[i].getPath());
-                            long duration = new Long(mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
-                            audioBook.getBookFiles().add(new AudioBookFile(audioBookFileList[i].getPath(), duration));
-                            totalDuration += duration;
-                        }
-                    }
-                    audioBook.setTotalDuration(totalDuration);
 
-                    File[] imageFiles = audioBookDirectory.listFiles(new FilenameFilter() {
-                        @Override
-                        public boolean accept(File dir, String filename) {
-                            return filename.endsWith(".jpg") ||
-                                    filename.endsWith(".jpeg") ||
-                                    filename.endsWith(".gif") ||
-                                    filename.endsWith(".png");
-                        }
-                    });
+                    if (null != files && files.length == 1) {
+                        Scanner scanner = new Scanner(files[0]);
+                        scanner.useDelimiter("//Z");
+                        String jsonString = scanner.next();
+                        audioBook = new AudioBook((JSONObject) new JSONTokener(jsonString).nextValue());
+                    } else {
+                        audioBook = new AudioBook();
+                        audioBook.setBookPath(audioBookDirectoryPath);
+                        audioBook.setTitle(audioBookDirectory.getName());
+                        File[] audioBookFileList = audioBookDirectory.listFiles(new FilenameFilter() {
+                            @Override
+                            public boolean accept(File dir, String filename) {
+                                // TODO: Support more than Mp3?
+                                return filename.endsWith(".mp3");
+                            }
+                        });
 
-                    if(null != imageFiles && imageFiles.length > 0) {
-                        audioBook.setCoverImagePath(imageFiles[0].getAbsolutePath());
+                        long totalDuration = 0;
+                        MediaMetadataRetriever mmr = new MediaMetadataRetriever();
+                        if (null != audioBookFileList) {
+                            for (File audioBookFile : audioBookFileList) {
+                                mmr.setDataSource(audioBookFile.getPath());
+                                long duration = new Long(mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
+                                audioBook.getBookFiles().add(new AudioBookFile(audioBookFile.getPath(), duration));
+                                totalDuration += duration;
+                            }
+                        }
+                        audioBook.setTotalDuration(totalDuration);
+
+                        File[] imageFiles = audioBookDirectory.listFiles(new FilenameFilter() {
+                            @Override
+                            public boolean accept(File dir, String filename) {
+                                return filename.endsWith(".jpg") ||
+                                        filename.endsWith(".jpeg") ||
+                                        filename.endsWith(".gif") ||
+                                        filename.endsWith(".png");
+                            }
+                        });
+
+                        if (null != imageFiles && imageFiles.length > 0) {
+                            audioBook.setCoverImagePath(imageFiles[0].getAbsolutePath());
+                        }
                     }
                 }
+            } catch (Exception e) {
+                throw new BardException(e);
             }
-            return audioBook;
-        } catch (Exception e) {
-            throw new BardException(e);
         }
+        return audioBook;
+    }
+
+    public boolean save(AudioBook audioBook) {
+        FileOutputStream fos = null;
+        String savePath = audioBook.getBookPath() + File.separator + AUDIOBOOK_JSON_FILE;
+        try {
+            JSONObject json = audioBook.toJSON();
+            fos = new FileOutputStream(new File(savePath));
+            fos.write(json.toString().getBytes());
+            fos.flush();
+            return true;
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to save audiobook at " + savePath, e);
+            return false;
+        } finally {
+            if (fos != null) {
+                try {
+                    fos.close();
+                } catch (IOException e) {
+                    // already closed.
+                }
+            }
+        }
+
     }
 }

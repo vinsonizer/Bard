@@ -4,7 +4,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * Created by jv on 7/14/2015.
+ * @author Jason Vinson
+ *
+ * Model class that represents a single file in an AudioBook
  */
 public class AudioBookFile {
 
@@ -43,7 +45,7 @@ public class AudioBookFile {
     public JSONObject toJSON() throws JSONException {
         JSONObject json = new JSONObject();
         json.put(JSON_FILEPATH, getFilePath());
-        json.put(JSON_FILE_DURATION, getFilePath());
+        json.put(JSON_FILE_DURATION, getFileDuration());
         return json;
     }
 }

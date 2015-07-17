@@ -9,13 +9,15 @@ import java.io.File;
 import java.io.IOException;
 
 /**
- * Created by jv on 7/14/2015.
+ * @author Jason Vinson
+ *
+ * Proxy to MediaPlayer to handle media control
  */
 public class AudioBookPlayer {
 
     private static AudioBookPlayer audioBookPlayer;
-    private Context context;
     private static MediaPlayer mediaPlayer;
+    private Context context;
 
     private AudioBookPlayer(Context context) {
         this.context = context;
@@ -39,34 +41,55 @@ public class AudioBookPlayer {
     }
 
     public void close() {
-        mediaPlayer.release();
-        mediaPlayer = null;
+        if (mediaPlayer != null) {
+            mediaPlayer.release();
+            mediaPlayer = null;
+        }
     }
 
     public boolean playPause() {
-        if(mediaPlayer.isPlaying()) {
-            mediaPlayer.pause();
-        } else {
-            mediaPlayer.start();
+        if (mediaPlayer != null) {
+            if (mediaPlayer.isPlaying()) {
+                mediaPlayer.pause();
+            } else {
+                mediaPlayer.start();
+            }
+            return mediaPlayer.isPlaying();
         }
-        return mediaPlayer.isPlaying();
+        return false;
     }
 
     public void ffwd() {
-        mediaPlayer.seekTo(mediaPlayer.getCurrentPosition() + 30000);
+        if (mediaPlayer != null) {
+            mediaPlayer.seekTo(mediaPlayer.getCurrentPosition() + 30000);
+        }
 
     }
 
     public void rew() {
-        mediaPlayer.seekTo(mediaPlayer.getCurrentPosition() + 10000);
+        if (mediaPlayer != null) {
+            mediaPlayer.seekTo(mediaPlayer.getCurrentPosition() + 10000);
+        }
     }
 
-    public int getCurrentPosition() {
-        return mediaPlayer.getCurrentPosition();
+    public Integer getCurrentPosition() {
+        Integer result = null;
+        if (mediaPlayer != null) {
+            result = mediaPlayer.getCurrentPosition();
+        }
+        return result;
     }
 
     public void seekTo(int millis) {
-        mediaPlayer.seekTo(millis);
+        if (mediaPlayer != null) {
+            mediaPlayer.seekTo(millis);
+        }
+    }
+
+    public void stop() {
+        if (mediaPlayer != null) {
+            mediaPlayer.stop();
+        }
     }
 
     public void next() {
@@ -79,7 +102,7 @@ public class AudioBookPlayer {
 
     public interface Callback {
 
-        public void onComplete(MediaPlayer mediaPlayer, Context context);
+        void onComplete(MediaPlayer mediaPlayer, Context context);
 
     }
 }

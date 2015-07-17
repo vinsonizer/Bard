@@ -5,11 +5,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.design.widget.Snackbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -31,21 +29,36 @@ import java.io.File;
 import java.io.IOException;
 
 /**
- * A placeholder fragment containing a simple view.
+ * @author Jason Vinson
+ *
+ * A Fragment for AudioBook information and playback controls...
+ * likely one of the main fragments of this App
  */
 public class PlayerFragment extends Fragment {
 
     private static final String TAG = "PlayerFragment";
 
-    private ImageView playerBookCoverImage;
+    // Loaded AudioBook
     private AudioBook audioBook;
-    private boolean navButtonBarVisible = false;
+    // Cover Image for background
+    private ImageView playerBookCoverImage;
+
+    // Current position in file
     private TextView currentPosition;
+    // Total duration of file
     private TextView totalDuration;
+
+    // Views that overlay cover image for rew/ffwd
     private View rewView;
     private View fwdView;
+
+    // Floating Action Button for play/pause toggle
     private ImageButton playPauseButton;
+
+    // SeekBar to show current progress and seek in track
     private SeekBar seekBar;
+    // Handler for SeekBar callbacks
+    private boolean postSeekBarUpdates;
 
     public PlayerFragment() {
     }
@@ -56,38 +69,19 @@ public class PlayerFragment extends Fragment {
         View v = inflater.inflate(R.layout.fragment_player, container, false);
         setHasOptionsMenu(true);
 
-        // Get all View objects first
+        // Get all View objects first and assign to member vars
         playerBookCoverImage = (ImageView)v.findViewById(R.id.playerBookCoverImage);
         currentPosition = (TextView)v.findViewById(R.id.player_currentPosition);
         totalDuration = (TextView)v.findViewById(R.id.player_totalDuration);
         playPauseButton = (ImageButton) v.findViewById(R.id.player_playPauseButton);
-        rewView = (View)v.findViewById(R.id.player_rewView);
-        fwdView = (View)v.findViewById(R.id.player_fwdView);
+        rewView = v.findViewById(R.id.player_rewView);
+        fwdView = v.findViewById(R.id.player_fwdView);
         seekBar = (SeekBar) v.findViewById(R.id.player_seekBar);
 
+        // Initialize the view object controls
         initDisplay();
 
         return v;
-    }
-
-    @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        if(null == audioBook) {
-            try {
-                Snackbar.make(getView(), "AudioBook Not Found", Snackbar.LENGTH_LONG)
-                        .setAction("Setup Path", new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                jumpToPrefs();
-                            }
-                        })
-                        .setActionTextColor(Color.RED)
-                        .show();
-            } catch (Exception e) {
-                Log.e(TAG, "Exception for snackbar", e);
-            }
-        }
     }
 
     @Override
@@ -96,18 +90,27 @@ public class PlayerFragment extends Fragment {
         initDisplay();
     }
 
+    /**
+     * Convenience method for going to Preferences Activity
+     */
     private void jumpToPrefs() {
         Intent i = new Intent(getActivity(), PreferencesActivity.class);
         startActivity(i);
     }
 
+    /**
+     * Convenience method for adding view callback controls
+     */
     private void initDisplay() {
+
+        // First try t load the audiobook that is configured
         try {
             audioBook = AudioBookManager.get(getActivity()).load();
         } catch (BardException be) {
             Log.e(TAG, "Failed to load audiobook", be);
         }
 
+        // If the audiobook loads, init the display components with the audiobook config
         if(audioBook != null) {
             if (audioBook.getCoverImagePath() != null) {
                 File imgFile = new File(audioBook.getCoverImagePath());
@@ -120,10 +123,9 @@ public class PlayerFragment extends Fragment {
 
             AudioBookFile currentFile = audioBook.getBookFiles().get(audioBook.getCurrentFileIndex());
 
-            currentPosition.setText(formatTime(audioBook.getCurrentPosition()));
-            totalDuration.setText(formatTime(currentFile.getFileDuration()));
 
             try {
+                // TODO: refactor.  I don't like this...
                 AudioBookPlayer.get(getActivity()).setSource(currentFile.getFilePath(), new AudioBookPlayer.Callback() {
                     @Override
                     public void onComplete(MediaPlayer mediaPlayer, Context context) {
@@ -146,7 +148,12 @@ public class PlayerFragment extends Fragment {
                     }
                 });
 
+                AudioBookPlayer.get(getActivity()).seekTo(audioBook.getCurrentPosition());
+                currentPosition.setText(formatTime(audioBook.getCurrentPosition()));
+                totalDuration.setText(formatTime(currentFile.getFileDuration()));
 
+
+                // TODO: Create custom images for play/pause etc.
                 playPauseButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
@@ -172,18 +179,31 @@ public class PlayerFragment extends Fragment {
                     }
                 });
                 seekBar.setMax((int) currentFile.getFileDuration());
+
+                // Create a Handler to do callbacks for the current position in the SeekBar
                 final Handler seekBarHandler = new Handler();
+                postSeekBarUpdates = true;
                 getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        int bookCurrentPosition = AudioBookPlayer.get(getActivity()).getCurrentPosition();
-                        currentPosition.setText(formatTime(bookCurrentPosition));
-                        seekBar.setProgress(bookCurrentPosition / 1000);
-                        seekBarHandler.postDelayed(this, 1000);
+                        if (postSeekBarUpdates) {
+                            // Get Position
+                            int bookCurrentPosition = AudioBookPlayer.get(getActivity()).getCurrentPosition();
+                            // Set in the view
+                            currentPosition.setText(formatTime(bookCurrentPosition));
+                            // Set the SeekBar value
+                            seekBar.setProgress(bookCurrentPosition / 1000);
+                            // Update audioBook value so it will be persisted when stopped
+                            audioBook.setCurrentPosition(bookCurrentPosition);
+                            // Sleep for 1 second
+                            seekBarHandler.postDelayed(this, 1000);
+                        }
                     }
 
                 });
 
+
+                // TODO: Make this actually work
                 seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
 
                     int p = 0;
@@ -211,19 +231,18 @@ public class PlayerFragment extends Fragment {
                 Toast.makeText(getActivity(), "Couldn't Load audio book from " + currentFile, Toast.LENGTH_LONG).show();
             }
 
+            // Should probably add an Else here that shows something about bad config...
+
         }
     }
 
+    // Simple milliseconds to HH:MM:SS formatter
     private String formatTime(long timeInMilliseconds) {
-        StringBuilder timeString = new StringBuilder();
         long timeInSeconds = timeInMilliseconds / 1000;
         long seconds = timeInSeconds % 60;
         long minutes = timeInSeconds / 60 % 60;
         long hours = timeInSeconds / 60 / 60 % 60;
-        timeString.append(String.format("%02d:", hours));
-        timeString.append(String.format("%02d:", minutes));
-        timeString.append(String.format("%02d", seconds));
-        return timeString.toString();
+        return String.format("%02d:%02d:%02d", hours, minutes, seconds);
     }
 
     @Override
@@ -245,5 +264,13 @@ public class PlayerFragment extends Fragment {
     public void onDestroy() {
         super.onDestroy();
         AudioBookPlayer.get(getActivity()).close();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        postSeekBarUpdates = false;
+        AudioBookPlayer.get(getActivity()).stop();
+        AudioBookManager.get(getActivity()).save(audioBook);
     }
 }
