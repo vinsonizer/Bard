@@ -1,6 +1,5 @@
 package com.shemasoft.android.bard;
 
-import android.app.Fragment;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -8,6 +7,7 @@ import android.graphics.BitmapFactory;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -37,6 +37,7 @@ import java.io.IOException;
 public class PlayerFragment extends Fragment {
 
     private static final String TAG = "PlayerFragment";
+    private static final String EXTRA_FILEINDEX = "com.shemasoft.android.bard.PlayerFragment.EXTRA_FILEINDEX";
 
     // Loaded AudioBook
     private AudioBook audioBook;
@@ -48,9 +49,9 @@ public class PlayerFragment extends Fragment {
     // Total duration of file
     private TextView totalDuration;
 
-    // Views that overlay cover image for rew/ffwd
-    private View rewView;
-    private View fwdView;
+    // FFWD and REW buttons
+    private ImageButton rewButton;
+    private ImageButton ffwdButton;
 
     // Floating Action Button for play/pause toggle
     private ImageButton playPauseButton;
@@ -60,9 +61,6 @@ public class PlayerFragment extends Fragment {
     // Handler for SeekBar callbacks
     private boolean postSeekBarUpdates;
 
-    public PlayerFragment() {
-    }
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -70,12 +68,12 @@ public class PlayerFragment extends Fragment {
         setHasOptionsMenu(true);
 
         // Get all View objects first and assign to member vars
-        playerBookCoverImage = (ImageView)v.findViewById(R.id.playerBookCoverImage);
+        playerBookCoverImage = (ImageView) v.findViewById(R.id.player_bookCoverImage);
         currentPosition = (TextView)v.findViewById(R.id.player_currentPosition);
         totalDuration = (TextView)v.findViewById(R.id.player_totalDuration);
         playPauseButton = (ImageButton) v.findViewById(R.id.player_playPauseButton);
-        rewView = v.findViewById(R.id.player_rewView);
-        fwdView = v.findViewById(R.id.player_fwdView);
+        rewButton = (ImageButton) v.findViewById(R.id.player_rewButton);
+        ffwdButton = (ImageButton) v.findViewById(R.id.player_ffButton);
         seekBar = (SeekBar) v.findViewById(R.id.player_seekBar);
 
         // Initialize the view object controls
@@ -112,6 +110,8 @@ public class PlayerFragment extends Fragment {
 
         // If the audiobook loads, init the display components with the audiobook config
         if(audioBook != null) {
+
+            getActivity().setTitle(audioBook.getTitle());
             if (audioBook.getCoverImagePath() != null) {
                 File imgFile = new File(audioBook.getCoverImagePath());
                 if (imgFile.exists()) {
@@ -120,9 +120,7 @@ public class PlayerFragment extends Fragment {
                 }
             }
 
-
             AudioBookFile currentFile = audioBook.getBookFiles().get(audioBook.getCurrentFileIndex());
-
 
             try {
                 // TODO: refactor.  I don't like this...
@@ -150,7 +148,7 @@ public class PlayerFragment extends Fragment {
 
                 AudioBookPlayer.get(getActivity()).seekTo(audioBook.getCurrentPosition());
                 currentPosition.setText(formatTime(audioBook.getCurrentPosition()));
-                totalDuration.setText(formatTime(currentFile.getFileDuration()));
+                totalDuration.setText(formatTime(audioBook.getTotalDuration()));
 
 
                 // TODO: Create custom images for play/pause etc.
@@ -159,20 +157,20 @@ public class PlayerFragment extends Fragment {
                     public void onClick(View v) {
                         boolean isPlaying = AudioBookPlayer.get(getActivity()).playPause();
                         if (isPlaying) {
-                            playPauseButton.setImageResource(android.R.drawable.ic_media_pause);
+                            playPauseButton.setImageResource(R.drawable.pause);
                         } else {
-                            playPauseButton.setImageResource(android.R.drawable.ic_media_play);
+                            playPauseButton.setImageResource(R.drawable.play);
                         }
                     }
                 });
 
-                rewView.setOnClickListener(new View.OnClickListener() {
+                rewButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
                         AudioBookPlayer.get(getActivity()).rew();
                     }
                 });
-                fwdView.setOnClickListener(new View.OnClickListener() {
+                ffwdButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
                         AudioBookPlayer.get(getActivity()).ffwd();

@@ -1,7 +1,6 @@
 package com.shemasoft.android.bard;
 
-import android.app.Fragment;
-import android.util.Log;
+import android.support.v4.app.Fragment;
 
 public class PlayerActivity extends SingleFragmentActivity {
 
@@ -9,8 +8,6 @@ public class PlayerActivity extends SingleFragmentActivity {
 
     @Override
     public Fragment createFragment() {
-        Log.d(TAG, "Loading Player Fragment");
         return new PlayerFragment();
     }
-
 }

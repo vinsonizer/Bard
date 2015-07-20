@@ -29,7 +29,7 @@ public class AudioBook {
     private String coverImagePath;
     private int currentFileIndex = 0;
     private int currentPosition = 0;
-    private long totalDuration;
+    private long totalDuration = 0;
     private List<AudioBookFile> bookFiles;
 
     public AudioBook() {

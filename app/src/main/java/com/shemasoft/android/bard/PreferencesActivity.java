@@ -1,14 +1,21 @@
 package com.shemasoft.android.bard;
 
 
-import android.app.Fragment;
+import android.os.Bundle;
+import android.preference.PreferenceActivity;
 
 /**
- * Created by jv on 7/15/2015.
+ * @author Jason Vinson
+ *
+ * Simple activity for preferences management, would use fragments
+ * except they aren't able to use the support library...
  */
-public class PreferencesActivity extends SingleFragmentActivity {
+public class PreferencesActivity extends PreferenceActivity {
+
     @Override
-    public Fragment createFragment() {
-        return new PreferencesFragment();
+    @SuppressWarnings("deprecation")
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        addPreferencesFromResource(R.xml.preferences);
     }
 }
