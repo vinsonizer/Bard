@@ -8,6 +8,7 @@ import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -70,6 +71,13 @@ public class PlayerFragment extends Fragment {
         fragment.setArguments(args);
         return fragment;
     }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        ((AppCompatActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+    }
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -273,9 +281,7 @@ public class PlayerFragment extends Fragment {
         postSeekBarUpdates = false;
         AudioBookPlayer.get(getActivity()).stop();
         try {
-            AudioBookLibrary library = AudioBookLibraryManager.get(getActivity()).load();
-            library.getAudioBooks().add(bookIndex, audioBook);
-            AudioBookLibraryManager.get(getActivity()).save(library);
+            AudioBookLibraryManager.get(getActivity()).save();
         } catch (Exception e) {
             Log.e(TAG, "Failed to save state", e);
             Toast.makeText(getActivity(), "FIXME: Failed to persist", Toast.LENGTH_LONG);

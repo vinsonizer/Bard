@@ -36,6 +36,7 @@ public class AudioBookLibraryManager {
 
     private static AudioBookLibraryManager audioBookManager;
 
+    private AudioBookLibrary library;
     private Context context;
 
     private AudioBookLibraryManager(Context context) {
@@ -50,12 +51,12 @@ public class AudioBookLibraryManager {
     }
 
 
-    public boolean save(AudioBookLibrary audioBookLibrary) {
+    public boolean save() {
         try (
                 OutputStream os = context.openFileOutput(LIBRARY_JSON_FILE, Context.MODE_PRIVATE);
                 Writer writer = new OutputStreamWriter(os)
         ) {
-            JSONObject json = audioBookLibrary.toJSON();
+            JSONObject json = library.toJSON();
             writer.write(json.toString());
             writer.flush();
             return true;
@@ -66,25 +67,27 @@ public class AudioBookLibraryManager {
     }
 
     public AudioBookLibrary load() throws IOException, JSONException {
-        AudioBookLibrary audioBookLibrary = new AudioBookLibrary();
-        try (
-                InputStream is = context.openFileInput(LIBRARY_JSON_FILE);
-                BufferedReader br = new BufferedReader(new InputStreamReader(is))
-        ) {
-            StringBuilder sb = new StringBuilder();
-            String line = null;
-            while ((line = br.readLine()) != null) {
-                sb.append(line);
+        if (library == null) {
+            library = new AudioBookLibrary();
+            try (
+                    InputStream is = context.openFileInput(LIBRARY_JSON_FILE);
+                    BufferedReader br = new BufferedReader(new InputStreamReader(is))
+            ) {
+                StringBuilder sb = new StringBuilder();
+                String line = null;
+                while ((line = br.readLine()) != null) {
+                    sb.append(line);
+                }
+                String jsonString = sb.toString();
+                if (!jsonString.isEmpty()) {
+                    JSONObject json = (JSONObject) new JSONTokener(sb.toString()).nextValue();
+                    library = new AudioBookLibrary(json);
+                }
+            } catch (FileNotFoundException e) {
+                // Ignore this, since it happens on first load
             }
-            String jsonString = sb.toString();
-            if (!jsonString.isEmpty()) {
-                JSONObject json = (JSONObject) new JSONTokener(sb.toString()).nextValue();
-                audioBookLibrary = new AudioBookLibrary(json);
-            }
-        } catch (FileNotFoundException e) {
-            // Ignore this, since it happens on first load
         }
-        return audioBookLibrary;
+        return library;
     }
 
     public AudioBook loadBookFromPath(String audioBookDirectoryPath) {
