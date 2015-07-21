@@ -76,8 +76,11 @@ public class AudioBookLibraryManager {
             while ((line = br.readLine()) != null) {
                 sb.append(line);
             }
-            JSONObject json = (JSONObject) new JSONTokener(sb.toString()).nextValue();
-            audioBookLibrary = new AudioBookLibrary(json);
+            String jsonString = sb.toString();
+            if (!jsonString.isEmpty()) {
+                JSONObject json = (JSONObject) new JSONTokener(sb.toString()).nextValue();
+                audioBookLibrary = new AudioBookLibrary(json);
+            }
         } catch (FileNotFoundException e) {
             // Ignore this, since it happens on first load
         }

@@ -123,6 +123,11 @@ public class AudioBook {
         return array;
     }
 
+    @Override
+    public String toString() {
+        return getTitle();
+    }
+
     private List<AudioBookFile> getBookFilesFromJSON(JSONObject json) throws JSONException {
         JSONArray array = json.getJSONArray(JSON_BOOK_FILES);
         List<AudioBookFile> bookFileList = new ArrayList<>();

@@ -8,6 +8,7 @@ public class PlayerActivity extends SingleFragmentActivity {
 
     @Override
     public Fragment createFragment() {
-        return new PlayerFragment();
+        Integer index = getIntent().getIntExtra(PlayerFragment.EXTRA_BOOKINDEX, 0);
+        return PlayerFragment.newInstance(index);
     }
 }

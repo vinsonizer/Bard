@@ -23,7 +23,7 @@ import android.widget.Toast;
 
 import com.shemasoft.android.bard.model.AudioBook;
 import com.shemasoft.android.bard.model.AudioBookFile;
-import com.shemasoft.android.bard.model.BardException;
+import com.shemasoft.android.bard.model.AudioBookLibrary;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,9 +36,8 @@ import java.io.IOException;
  */
 public class PlayerFragment extends Fragment {
 
+    public static final String EXTRA_BOOKINDEX = "com.shemasoft.android.bard.PlayerFragment.EXTRA_BOOKINDEX";
     private static final String TAG = "PlayerFragment";
-    private static final String EXTRA_FILEINDEX = "com.shemasoft.android.bard.PlayerFragment.EXTRA_FILEINDEX";
-
     // Loaded AudioBook
     private AudioBook audioBook;
     // Cover Image for background
@@ -61,6 +60,17 @@ public class PlayerFragment extends Fragment {
     // Handler for SeekBar callbacks
     private boolean postSeekBarUpdates;
 
+    private int bookIndex = 0;
+
+    public static PlayerFragment newInstance(int bookIndex) {
+        Bundle args = new Bundle();
+        args.putInt(EXTRA_BOOKINDEX, bookIndex);
+
+        PlayerFragment fragment = new PlayerFragment();
+        fragment.setArguments(args);
+        return fragment;
+    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -76,35 +86,17 @@ public class PlayerFragment extends Fragment {
         ffwdButton = (ImageButton) v.findViewById(R.id.player_ffButton);
         seekBar = (SeekBar) v.findViewById(R.id.player_seekBar);
 
-        // Initialize the view object controls
-        initDisplay();
 
-        return v;
-    }
+        if (null != getArguments())
+            bookIndex = getArguments().getInt(EXTRA_BOOKINDEX);
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        initDisplay();
-    }
-
-    /**
-     * Convenience method for going to Preferences Activity
-     */
-    private void jumpToPrefs() {
-        Intent i = new Intent(getActivity(), PreferencesActivity.class);
-        startActivity(i);
-    }
-
-    /**
-     * Convenience method for adding view callback controls
-     */
-    private void initDisplay() {
-
-        // First try t load the audiobook that is configured
+        // First try to load the audiobook that is configured
         try {
-            audioBook = AudioBookManager.get(getActivity()).load();
-        } catch (BardException be) {
+            AudioBookLibrary library = AudioBookLibraryManager.get(getActivity()).load();
+            if (library.getAudioBooks() != null) {
+                audioBook = library.getAudioBooks().get(bookIndex);
+            }
+        } catch (Exception be) {
             Log.e(TAG, "Failed to load audiobook", be);
         }
 
@@ -232,7 +224,18 @@ public class PlayerFragment extends Fragment {
             // Should probably add an Else here that shows something about bad config...
 
         }
+
+        return v;
     }
+
+    /**
+     * Convenience method for going to Preferences Activity
+     */
+    private void jumpToPrefs() {
+        Intent i = new Intent(getActivity(), PreferencesActivity.class);
+        startActivity(i);
+    }
+
 
     // Simple milliseconds to HH:MM:SS formatter
     private String formatTime(long timeInMilliseconds) {
@@ -269,6 +272,13 @@ public class PlayerFragment extends Fragment {
         super.onPause();
         postSeekBarUpdates = false;
         AudioBookPlayer.get(getActivity()).stop();
-        AudioBookManager.get(getActivity()).save(audioBook);
+        try {
+            AudioBookLibrary library = AudioBookLibraryManager.get(getActivity()).load();
+            library.getAudioBooks().add(bookIndex, audioBook);
+            AudioBookLibraryManager.get(getActivity()).save(library);
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to save state", e);
+            Toast.makeText(getActivity(), "FIXME: Failed to persist", Toast.LENGTH_LONG);
+        }
     }
 }
