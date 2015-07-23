@@ -29,7 +29,7 @@ public class AudioBook {
     private String coverImagePath;
     private int currentFileIndex = 0;
     private int currentPosition = 0;
-    private long totalDuration = 0;
+    private int totalDuration = 0;
     private List<AudioBookFile> bookFiles;
 
     public AudioBook() {
@@ -43,7 +43,7 @@ public class AudioBook {
         setCoverImagePath(json.getString(JSON_COVER_IMAGE_PATH));
         setCurrentFileIndex(json.getInt(JSON_CURR_FILE_INDEX));
         setCurrentPosition(json.getInt(JSON_CURR_POS));
-        setTotalDuration(json.getLong(JSON_TOTAL_DURATION));
+        setTotalDuration(json.getInt(JSON_TOTAL_DURATION));
         setBookFiles(getBookFilesFromJSON(json));
     }
 
@@ -79,11 +79,11 @@ public class AudioBook {
         this.currentPosition = currentPosition;
     }
 
-    public long getTotalDuration() {
+    public int getTotalDuration() {
         return totalDuration;
     }
 
-    public void setTotalDuration(long totalDuration) {
+    public void setTotalDuration(int totalDuration) {
         this.totalDuration = totalDuration;
     }
 
@@ -101,6 +101,23 @@ public class AudioBook {
 
     public void setBookPath(String bookPath) {
         this.bookPath = bookPath;
+    }
+
+    public String getTotalDurationString() {
+        return formatTime(totalDuration);
+    }
+
+    public String getCurrentPositionString() {
+        return formatTime(currentPosition);
+    }
+
+    // Simple milliseconds to HH:MM:SS formatter
+    public String formatTime(int timeInMilliseconds) {
+        int timeInSeconds = timeInMilliseconds / 1000;
+        int seconds = timeInSeconds % 60;
+        int minutes = timeInSeconds / 60 % 60;
+        int hours = timeInSeconds / 60 / 60 % 60;
+        return String.format("%02d:%02d:%02d", hours, minutes, seconds);
     }
 
     public JSONObject toJSON() throws JSONException {

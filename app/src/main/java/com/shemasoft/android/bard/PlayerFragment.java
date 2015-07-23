@@ -147,8 +147,8 @@ public class PlayerFragment extends Fragment {
                 });
 
                 AudioBookPlayer.get(getActivity()).seekTo(audioBook.getCurrentPosition());
-                currentPosition.setText(formatTime(audioBook.getCurrentPosition()));
-                totalDuration.setText(formatTime(audioBook.getTotalDuration()));
+                currentPosition.setText(audioBook.getCurrentPositionString());
+                totalDuration.setText(audioBook.getTotalDurationString());
 
 
                 // TODO: Create custom images for play/pause etc.
@@ -187,12 +187,12 @@ public class PlayerFragment extends Fragment {
                         if (postSeekBarUpdates) {
                             // Get Position
                             int bookCurrentPosition = AudioBookPlayer.get(getActivity()).getCurrentPosition();
-                            // Set in the view
-                            currentPosition.setText(formatTime(bookCurrentPosition));
-                            // Set the SeekBar value
-                            seekBar.setProgress(bookCurrentPosition / 1000);
                             // Update audioBook value so it will be persisted when stopped
                             audioBook.setCurrentPosition(bookCurrentPosition);
+                            // Set in the view
+                            currentPosition.setText(audioBook.getCurrentPositionString());
+                            // Set the SeekBar value
+                            seekBar.setProgress(bookCurrentPosition / 1000);
                             // Sleep for 1 second
                             seekBarHandler.postDelayed(this, 1000);
                         }
@@ -244,15 +244,6 @@ public class PlayerFragment extends Fragment {
         startActivity(i);
     }
 
-
-    // Simple milliseconds to HH:MM:SS formatter
-    private String formatTime(long timeInMilliseconds) {
-        long timeInSeconds = timeInMilliseconds / 1000;
-        long seconds = timeInSeconds % 60;
-        long minutes = timeInSeconds / 60 % 60;
-        long hours = timeInSeconds / 60 / 60 % 60;
-        return String.format("%02d:%02d:%02d", hours, minutes, seconds);
-    }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {

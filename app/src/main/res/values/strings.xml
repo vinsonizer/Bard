@@ -5,4 +5,5 @@
     <string name="toggle_controls">Toggle Controls</string>
     <string name="prefs_audiobook_path">AudioBook Path</string>
     <string name="prefs_audiobook_path_summary">Path to directory with AudioBook files</string>
+    <string name="library_card_position">%1$s of %2$s</string>
 </resources>
